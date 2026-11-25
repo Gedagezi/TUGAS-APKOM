@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated SEGMA.AI user profile and connected social media status.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "displayName": { "type": "string", "description": "User display name." },
+        "roleTitle": { "type": "string", "description": "Creator, manager, or brand role title." },
+        "plan": { "type": "string", "enum": ["FREE", "PRO", "AGENCY"] },
+        "activeHandle": { "type": "string", "description": "Primary active social handle." },
+        "secondaryHandle": { "type": "string", "description": "Secondary workspace social handle." },
+        "instagramConnected": { "type": "boolean" },
+        "instagramHandle": { "type": "string" },
+        "tiktokConnected": { "type": "boolean" },
+        "tiktokHandle": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on create." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update." }
+      },
+      "required": [
+        "userId", "displayName", "roleTitle", "plan",
+        "activeHandle", "secondaryHandle",
+        "instagramConnected", "instagramHandle",
+        "tiktokConnected", "tiktokHandle",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Digital marketing campaign with AI strategy and engagement metrics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "brandName": { "type": "string" },
+        "handle": { "type": "string" },
+        "objective": { "type": "string" },
+        "description": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "audienceTags": { "type": "array" },
+        "platforms": { "type": "array" },
+        "duration": { "type": "string" },
+        "budget": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "SCHEDULED", "ONGOING", "COMPLETED"] },
+        "demoData": { "type": "boolean" },
+        "targetReach": { "type": "integer" },
+        "targetEr": { "type": "number" },
+        "reach": { "type": "integer" },
+        "views": { "type": "integer" },
+        "likes": { "type": "integer" },
+        "comments": { "type": "integer" },
+        "shares": { "type": "integer" },
+        "saves": { "type": "integer" },
+        "engagementRate": { "type": "number" },
+        "dataSourceLabel": { "type": "string" },
+        "aiOverview": { "type": "string" },
+        "aiCommunicationStrategy": { "type": "string" },
+        "aiContentPillars": { "type": "array" },
+        "aiUploadStrategy": { "type": "string" },
+        "aiContentCalendar": { "type": "string" },
+        "aiCaptions": { "type": "string" },
+        "aiHashtags": { "type": "array" },
+        "aiAudioRecommendation": { "type": "string" },
+        "aiNextActionRecommendation": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "name", "brandName", "handle", "objective", "description",
+        "targetAudience", "audienceTags", "platforms", "duration", "budget",
+        "status", "demoData", "targetReach", "targetEr", "reach", "views",
+        "likes", "comments", "shares", "saves", "engagementRate", "dataSourceLabel",
+        "aiOverview", "aiCommunicationStrategy", "aiContentPillars",
+        "aiUploadStrategy", "aiContentCalendar", "aiCaptions", "aiHashtags",
+        "aiAudioRecommendation", "aiNextActionRecommendation",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "AudiencePersona": {
+      "title": "AudiencePersona",
+      "description": "Saved target audience segment persona.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "ageRange": { "type": "string" },
+        "location": { "type": "string" },
+        "interests": { "type": "array" },
+        "painPoints": { "type": "string" },
+        "preferredFormats": { "type": "array" },
+        "toneOfVoice": { "type": "string" },
+        "feasibilityScore": { "type": "integer" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "name", "ageRange", "location", "interests",
+        "painPoints", "preferredFormats", "toneOfVoice",
+        "feasibilityScore", "summary", "createdAt", "updatedAt"
+      ]
+    },
+    "CampaignEvaluation": {
+      "title": "CampaignEvaluation",
+      "description": "AI-generated campaign evaluation report.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "campaignName": { "type": "string" },
+        "executionSummary": { "type": "string" },
+        "objectiveAchievement": { "type": "string" },
+        "targetVsActual": { "type": "string" },
+        "engagementAnalysis": { "type": "string" },
+        "contentEffectiveness": { "type": "string" },
+        "strengths": { "type": "string" },
+        "weaknesses": { "type": "string" },
+        "influencingFactors": { "type": "string" },
+        "futureRecommendations": { "type": "string" },
+        "overallScore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "campaignId", "campaignName", "executionSummary",
+        "objectiveAchievement", "targetVsActual", "engagementAnalysis",
+        "contentEffectiveness", "strengths", "weaknesses",
+        "influencingFactors", "futureRecommendations", "overallScore",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "CompetitorResearch": {
+      "title": "CompetitorResearch",
+      "description": "Competitor analysis and differentiation strategy.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "brandName": { "type": "string" },
+        "username": { "type": "string" },
+        "platform": { "type": "string" },
+        "dataMode": { "type": "string" },
+        "contentThemes": { "type": "string" },
+        "publishingFrequency": { "type": "string" },
+        "dominantFormats": { "type": "string" },
+        "observedMetricsSummary": { "type": "string" },
+        "communicationStyle": { "type": "string" },
+        "strengths": { "type": "string" },
+        "opportunities": { "type": "string" },
+        "differentiationStrategy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "brandName", "username", "platform", "dataMode",
+        "contentThemes", "publishingFrequency", "dominantFormats",
+        "observedMetricsSummary", "communicationStyle", "strengths",
+        "opportunities", "differentiationStrategy", "createdAt", "updatedAt"
+      ]
+    },
+    "TrendBookmark": {
+      "title": "TrendBookmark",
+      "description": "Bookmarked trend or editorial insight.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "trendId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "summary": { "type": "string" },
+        "aiRecommendation": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "trendId", "title", "category", "summary",
+        "aiRecommendation", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/Campaign" },
+      "description": "User-owned digital marketing campaigns."
+    },
+    "/users/{userId}/personas/{personaId}": {
+      "schema": { "$ref": "#/entities/AudiencePersona" },
+      "description": "User-owned saved audience personas."
+    },
+    "/users/{userId}/evaluations/{evaluationId}": {
+      "schema": { "$ref": "#/entities/CampaignEvaluation" },
+      "description": "User-owned AI campaign evaluation reports."
+    },
+    "/users/{userId}/competitors/{researchId}": {
+      "schema": { "$ref": "#/entities/CompetitorResearch" },
+      "description": "User-owned AI competitor research reports."
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/TrendBookmark" },
+      "description": "User-owned bookmarked trend insights."
+    }
+  }
+}

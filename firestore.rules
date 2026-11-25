@@ -1,0 +1,374 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny all unmatched reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Shared Security Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidStringList(listVal, maxItems) {
+      return listVal is list &&
+             listVal.size() <= maxItems &&
+             (listVal.size() == 0 || listVal[0] is string);
+    }
+
+    // --- Entity Validation Helpers ---
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.displayName, 1, 80) &&
+             isValidString(data.roleTitle, 0, 80) &&
+             data.plan in ['FREE', 'PRO', 'AGENCY'] &&
+             isValidString(data.activeHandle, 0, 60) &&
+             isValidString(data.secondaryHandle, 0, 60) &&
+             data.instagramConnected is bool &&
+             isValidString(data.instagramHandle, 0, 60) &&
+             data.tiktokConnected is bool &&
+             isValidString(data.tiktokHandle, 0, 60);
+    }
+
+    function isValidCampaign(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.name, 1, 120) &&
+             isValidString(data.brandName, 0, 100) &&
+             isValidString(data.handle, 0, 60) &&
+             isValidString(data.objective, 1, 200) &&
+             isValidString(data.description, 0, 1500) &&
+             isValidString(data.targetAudience, 0, 300) &&
+             isValidStringList(data.audienceTags, 10) &&
+             isValidStringList(data.platforms, 10) &&
+             isValidString(data.duration, 0, 80) &&
+             isValidString(data.budget, 0, 80) &&
+             data.status in ['DRAFT', 'SCHEDULED', 'ONGOING', 'COMPLETED'] &&
+             data.demoData is bool &&
+             data.targetReach is int && data.targetReach >= 0 && data.targetReach <= 1000000000 &&
+             data.targetEr is number && data.targetEr >= 0 && data.targetEr <= 100 &&
+             data.reach is int && data.reach >= 0 && data.reach <= 1000000000 &&
+             data.views is int && data.views >= 0 && data.views <= 1000000000 &&
+             data.likes is int && data.likes >= 0 && data.likes <= 1000000000 &&
+             data.comments is int && data.comments >= 0 && data.comments <= 1000000000 &&
+             data.shares is int && data.shares >= 0 && data.shares <= 1000000000 &&
+             data.saves is int && data.saves >= 0 && data.saves <= 1000000000 &&
+             data.engagementRate is number && data.engagementRate >= 0 && data.engagementRate <= 100 &&
+             isValidString(data.dataSourceLabel, 0, 120) &&
+             isValidString(data.aiOverview, 0, 3000) &&
+             isValidString(data.aiCommunicationStrategy, 0, 2000) &&
+             isValidStringList(data.aiContentPillars, 10) &&
+             isValidString(data.aiUploadStrategy, 0, 1500) &&
+             isValidString(data.aiContentCalendar, 0, 4000) &&
+             isValidString(data.aiCaptions, 0, 3000) &&
+             isValidStringList(data.aiHashtags, 20) &&
+             isValidString(data.aiAudioRecommendation, 0, 500) &&
+             isValidString(data.aiNextActionRecommendation, 0, 2000);
+    }
+
+    function isValidPersona(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.name, 1, 100) &&
+             isValidString(data.ageRange, 0, 50) &&
+             isValidString(data.location, 0, 100) &&
+             isValidStringList(data.interests, 10) &&
+             isValidString(data.painPoints, 0, 1000) &&
+             isValidStringList(data.preferredFormats, 10) &&
+             isValidString(data.toneOfVoice, 0, 200) &&
+             data.feasibilityScore is int && data.feasibilityScore >= 0 && data.feasibilityScore <= 100 &&
+             isValidString(data.summary, 0, 1500);
+    }
+
+    function isValidEvaluation(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.campaignId, 1, 128) &&
+             isValidString(data.campaignName, 1, 120) &&
+             isValidString(data.executionSummary, 0, 2000) &&
+             isValidString(data.objectiveAchievement, 0, 1500) &&
+             isValidString(data.targetVsActual, 0, 1500) &&
+             isValidString(data.engagementAnalysis, 0, 1500) &&
+             isValidString(data.contentEffectiveness, 0, 1500) &&
+             isValidString(data.strengths, 0, 1500) &&
+             isValidString(data.weaknesses, 0, 1500) &&
+             isValidString(data.influencingFactors, 0, 1500) &&
+             isValidString(data.futureRecommendations, 0, 2000) &&
+             data.overallScore is int && data.overallScore >= 0 && data.overallScore <= 100;
+    }
+
+    function isValidCompetitor(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.brandName, 1, 100) &&
+             isValidString(data.username, 1, 80) &&
+             isValidString(data.platform, 1, 50) &&
+             isValidString(data.dataMode, 1, 80) &&
+             isValidString(data.contentThemes, 0, 1500) &&
+             isValidString(data.publishingFrequency, 0, 300) &&
+             isValidString(data.dominantFormats, 0, 500) &&
+             isValidString(data.observedMetricsSummary, 0, 1000) &&
+             isValidString(data.communicationStyle, 0, 1000) &&
+             isValidString(data.strengths, 0, 1500) &&
+             isValidString(data.opportunities, 0, 1500) &&
+             isValidString(data.differentiationStrategy, 0, 2000);
+    }
+
+    function isValidBookmark(data, userId) {
+      return data.userId == userId &&
+             isValidString(data.trendId, 1, 128) &&
+             isValidString(data.title, 1, 160) &&
+             isValidString(data.category, 1, 60) &&
+             isValidString(data.summary, 0, 1000) &&
+             isValidString(data.aiRecommendation, 0, 1500);
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'roleTitle', 'plan',
+                         'activeHandle', 'secondaryHandle',
+                         'instagramConnected', 'instagramHandle',
+                         'tiktokConnected', 'tiktokHandle',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'roleTitle', 'plan',
+                         'activeHandle', 'secondaryHandle',
+                         'instagramConnected', 'instagramHandle',
+                         'tiktokConnected', 'tiktokHandle',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTimestamp(incoming().createdAt) &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTimestamp(incoming().updatedAt) &&
+                       (
+                         // Action: Edit profile / handles
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'displayName', 'roleTitle', 'activeHandle', 'secondaryHandle', 'updatedAt'
+                         ]) ||
+                         // Action: Connect / disconnect social accounts
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'instagramConnected', 'instagramHandle', 'tiktokConnected', 'tiktokHandle', 'updatedAt'
+                         ])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /campaigns/{campaignId} {
+        allow get: if isOwner(userId) && isValidId(campaignId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(campaignId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'name', 'brandName', 'handle', 'objective', 'description',
+                           'targetAudience', 'audienceTags', 'platforms', 'duration', 'budget',
+                           'status', 'demoData', 'targetReach', 'targetEr', 'reach', 'views',
+                           'likes', 'comments', 'shares', 'saves', 'engagementRate', 'dataSourceLabel',
+                           'aiOverview', 'aiCommunicationStrategy', 'aiContentPillars',
+                           'aiUploadStrategy', 'aiContentCalendar', 'aiCaptions', 'aiHashtags',
+                           'aiAudioRecommendation', 'aiNextActionRecommendation',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'name', 'brandName', 'handle', 'objective', 'description',
+                           'targetAudience', 'audienceTags', 'platforms', 'duration', 'budget',
+                           'status', 'demoData', 'targetReach', 'targetEr', 'reach', 'views',
+                           'likes', 'comments', 'shares', 'saves', 'engagementRate', 'dataSourceLabel',
+                           'aiOverview', 'aiCommunicationStrategy', 'aiContentPillars',
+                           'aiUploadStrategy', 'aiContentCalendar', 'aiCaptions', 'aiHashtags',
+                           'aiAudioRecommendation', 'aiNextActionRecommendation',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidCampaign(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(campaignId) &&
+                         isValidCampaign(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         (
+                           // Action: Change campaign status
+                           incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) ||
+                           // Action: Revise strategy / AI copy / details
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'name', 'brandName', 'handle', 'objective', 'description',
+                             'targetAudience', 'audienceTags', 'platforms', 'duration', 'budget',
+                             'status', 'targetReach', 'targetEr', 'aiOverview', 'aiCommunicationStrategy',
+                             'aiContentPillars', 'aiUploadStrategy', 'aiContentCalendar', 'aiCaptions',
+                             'aiHashtags', 'aiAudioRecommendation', 'aiNextActionRecommendation', 'updatedAt'
+                           ]) ||
+                           // Action: Update metrics or AI next-action insight
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'reach', 'views', 'likes', 'comments', 'shares', 'saves',
+                             'engagementRate', 'demoData', 'dataSourceLabel',
+                             'aiNextActionRecommendation', 'updatedAt'
+                           ])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(campaignId);
+      }
+
+      match /personas/{personaId} {
+        allow get: if isOwner(userId) && isValidId(personaId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(personaId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'name', 'ageRange', 'location', 'interests',
+                           'painPoints', 'preferredFormats', 'toneOfVoice',
+                           'feasibilityScore', 'summary', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'name', 'ageRange', 'location', 'interests',
+                           'painPoints', 'preferredFormats', 'toneOfVoice',
+                           'feasibilityScore', 'summary', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidPersona(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(personaId) &&
+                         isValidPersona(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'ageRange', 'location', 'interests',
+                           'painPoints', 'preferredFormats', 'toneOfVoice',
+                           'feasibilityScore', 'summary', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(personaId);
+      }
+
+      match /evaluations/{evaluationId} {
+        allow get: if isOwner(userId) && isValidId(evaluationId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(evaluationId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'campaignId', 'campaignName', 'executionSummary',
+                           'objectiveAchievement', 'targetVsActual', 'engagementAnalysis',
+                           'contentEffectiveness', 'strengths', 'weaknesses',
+                           'influencingFactors', 'futureRecommendations', 'overallScore',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'campaignId', 'campaignName', 'executionSummary',
+                           'objectiveAchievement', 'targetVsActual', 'engagementAnalysis',
+                           'contentEffectiveness', 'strengths', 'weaknesses',
+                           'influencingFactors', 'futureRecommendations', 'overallScore',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidEvaluation(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(evaluationId) &&
+                         isValidEvaluation(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'executionSummary', 'objectiveAchievement', 'targetVsActual',
+                           'engagementAnalysis', 'contentEffectiveness', 'strengths',
+                           'weaknesses', 'influencingFactors', 'futureRecommendations',
+                           'overallScore', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(evaluationId);
+      }
+
+      match /competitors/{researchId} {
+        allow get: if isOwner(userId) && isValidId(researchId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(researchId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'brandName', 'username', 'platform', 'dataMode',
+                           'contentThemes', 'publishingFrequency', 'dominantFormats',
+                           'observedMetricsSummary', 'communicationStyle', 'strengths',
+                           'opportunities', 'differentiationStrategy', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'brandName', 'username', 'platform', 'dataMode',
+                           'contentThemes', 'publishingFrequency', 'dominantFormats',
+                           'observedMetricsSummary', 'communicationStyle', 'strengths',
+                           'opportunities', 'differentiationStrategy', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidCompetitor(incoming(), userId);
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(researchId);
+      }
+
+      match /bookmarks/{bookmarkId} {
+        allow get: if isOwner(userId) && isValidId(bookmarkId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(bookmarkId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'trendId', 'title', 'category', 'summary',
+                           'aiRecommendation', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'trendId', 'title', 'category', 'summary',
+                           'aiRecommendation', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTimestamp(incoming().createdAt) &&
+                         isValidTimestamp(incoming().updatedAt) &&
+                         isValidBookmark(incoming(), userId);
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(bookmarkId);
+      }
+    }
+  }
+}
